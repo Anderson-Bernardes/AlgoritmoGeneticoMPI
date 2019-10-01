@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-//#include "mpi.h"
+#include "mpi.h"
 
 #define NUMBER_ORGANISMS 10000
 #define NUMBER_GENES     50
@@ -33,16 +33,13 @@ int     EvaluateOrganisms(void);
 void    ProduceNextGeneration(void);
 int     SelectOneOrganism(void);
 void    CreateModel(void);
+void    PrintModel(void);
 
 // functions
-int main()
+int main(int argc, char *argv[])
 {
-
-    int ret, rank, size, i, tag, finalGeneration;
+    int ret, rank, size, i, tag, finalGeneration, j;
     double tempo;
-    /*
-    MPI_Status status;
-
 
     ret = MPI_Init(&argc, &argv);
     ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -57,35 +54,47 @@ int main()
     {
         tempo=MPI_Wtime();
 
-    */
-        //if(rank == 0){
+        if(rank == 0)
+        {
             CreateModel();
-        //}
+            PrintModel();
+            for(j = 1; j < 4; j++)
+                MPI_Send(modelOrganism, NUMBER_GENES, MPI_CHAR, j, tag, MPI_COMM_WORLD);
+        }
 
-        //for(i = 1; i < size; i++){
-          //  if(rank == i){
+        for(i = 1; i < size; i++)
+        {
+            if(rank == i)
+            {
+                MPI_Recv(modelOrganism, NUMBER_GENES, MPI_CHAR, 0, tag, MPI_COMM_WORLD, &status);
+                PrintModel();
                 AllocateMemory();
                 finalGeneration = DoOneRun();
                 printf("\nThe final generation was: %d\n", finalGeneration);
-            //}
-        //}
+            }
+        }
 
-        /*
         tempo=MPI_Wtime()-tempo;
         printf("Tempo decorrido no processo %d = %f\n", rank, tempo);
         MPI_Finalize();
     }
-    */
-
 }
 
 //cria o organismo modelo
-void CreateModel(void){
+void CreateModel(void)
+{
     int gene;
     for(gene=0; gene<NUMBER_GENES; ++gene)
     {
         modelOrganism[gene] = rand()%ALLELES;
     }
+}
+
+void PrintModel(void){
+    int i;
+    //for(i=0;i<NUMBER_GENES;i++)
+        printf("%s", modelOrganism);
+
 }
 
 void AllocateMemory(void)
